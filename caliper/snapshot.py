@@ -22,8 +22,8 @@ class Snapshot(tuple):
         :param quantile: :class:`float` in ``[0, 1]``.
         :returns: The value at the given quantile.
         '''
-        if quantile < 0 or quantile > 1:
-            raise TypeError('Quantile should be in [0, 1].')
+        if not 0 <= quantile <= 1:
+            raise ValueError('Quantile should be in [0, 1].')
 
         if len(self) == 0:
             return 0
@@ -77,6 +77,9 @@ class WeightedSnapshot(tuple):
         return obj
 
     def get_value(self, quantile):
+        if not 0 <= quantile <= 1:
+            raise ValueError('Quantile should be in [0, 1].')
+
         for pos, acc in enumerate(self._quantiles):
             if acc > quantile:
                 break

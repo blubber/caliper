@@ -1,7 +1,10 @@
+from functools import partial
+import re
+import uuid
 
-from . import metric, registry, reservoir, snapshot
+from caliper import metric, reservoir, snapshot
 
-from .metric import (
+from caliper.metric import (
     Counter,
     EWMA,
     Gauge,
@@ -9,14 +12,13 @@ from .metric import (
     Meter,
     Timer,
 )
-from .registry import Registry
-from .reservoir import (
+from caliper.reservoir import (
     ExponentiallyDecayingReservoir,
     Reservoir,
     SlidingWindowReservoir,
     UniformReservoir,
 )
-from .snapshot import Snapshot, WeightedSnapshot
+from caliper.snapshot import Snapshot, WeightedSnapshot
 
 __all__ = [
     'metric', 'registry', 'reservoir', 'snapshot',
@@ -28,27 +30,35 @@ __all__ = [
 ]
 
 
-def create_metric(cls, name, *args, **kwargs):
-    metric = cls(*args, **kwargs)
-    Registry.default_registry().register(name, metric)
+_registry = {}
+
+
+def get_or_create_metric(cls, name=None, *args, **kwargs):
+    name = name or ('a%s' % uuid.uuid4().hex)
+    key = _split_registry_key('%s.%s' % (name, cls.__name__))
+
+    metric = _registry.get(key)
+    if metric:
+        if not type(metric) is cls:
+            raise TypeError('A metric with key %s already exists with type %s' %
+                    ('.'.join(key), metric.__class__))
+    else:
+        metric = cls(*args, **kwargs)
+        _registry[key] = metric
+
     return metric
 
 
-def counter(name, *args, **kwargs):
-    return Counter(*args, **kwargs)
+counter = partial(get_or_create_metric, Counter)
+gauge = partial(get_or_create_metric, Gauge)
+histogram = partial(get_or_create_metric, Histogram)
+meter = partial(get_or_create_metric, Meter)
+timer = partial(get_or_create_metric, Timer)
 
 
-def gauge(name, *args, **kwargs):
-    return Gauge(*args, **kwargs)
+def _split_registry_key(keystr):
+    match = re.match('^([a-zA-Z][a-zA-Z0-9_]*)(?:\.([a-zA-Z][a-zA-Z0-9_]*))*$', keystr)
+    if not match:
+        raise ValueError("'%s' is in invalid registry key" % keystr)
 
-
-def histogram(name, *args, **kwargs):
-    return Histogram(*args, **kwargs)
-
-
-def meter(name, *args, **kwargs):
-    return Meter(*args, **kwargs)
-
-
-def timer(name, *args, **kwargs):
-    return Timer(*args, **kwargs)
+    return tuple(keystr.split('.'))

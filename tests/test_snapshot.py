@@ -17,10 +17,12 @@ class TestSnapshot(TestCase):
         self.assertEqual(self.snap.get_value(1.0), 5)
 
     def test_disallows_negative_percentile(self):
-        self.assertRaises(TypeError, self.snap.get_value, (-0.42,))
+        with self.assertRaises(ValueError):
+            self.snap.get_value(-0.42)
 
     def test_disallows_percentile_larger_then_one(self):
-        self.assertRaises(TypeError, self.snap.get_value, (1.1,))
+        with self.assertRaises(ValueError):
+            self.snap.get_value(1.1)
 
     def test_42th_percentile(self):
         self.assertEqual(self.snap.get_value(0.42), 2.52)
@@ -73,10 +75,12 @@ class TestWeightedSnapshot(TestCase):
         self.assertEqual(self.snap.get_value(1.0), 5)
 
     def test_disallows_negative_percentile(self):
-        self.assertRaises(TypeError, self.snap.get_value, (-0.42,))
+        with self.assertRaises(ValueError):
+            self.snap.get_value(-0.42)
 
     def test_disallows_percentile_larger_then_one(self):
-        self.assertRaises(TypeError, self.snap.get_value, (1.1,))
+        with self.assertRaises(ValueError):
+            self.snap.get_value(1.1)
 
     def test_75th_percentile(self):
         self.assertEqual(self.snap.get_value(0.75), 4)

@@ -7,7 +7,7 @@ the Metrics library for Java.
 
 ```python
 >>> import random, time, caliper
->>> timer = caliper.timer('random.sleep')
+>>> timer = caliper.timer()
 >>> for i in range(10):
 ...     with timer.time():
 ...         time.sleep(random.random())
